@@ -110,10 +110,10 @@ def send_all_data():
     send_to_graphite("storage.average_storage_growth_per_day", do_api_call("stats/averageStorageGrowthPerDay")['bytes'])
     send_to_graphite("performance.runway_remaining", do_api_call("stats/runwayRemaining")['days'])
     send_to_graphite("storage.vms_in_vcenter", do_api_call("vm/count")['count'])
+    send_to_graphite("performance.physical_ingest_per_day", do_api_call("stats/physicalIngestPerDay")[0]['stat']) 
 
     send_latest_stat("performance.logical_ingest", "stats/logicalIngest", "stat")
     send_latest_stat("performance.physical_ingest", "stats/physicalIngest", "stat")
-    send_latest_stat("performance.physical_ingest_per_day", "stats/physicalIngestPerDay", "stat")
     send_latest_stat("performance.snapshot_ingest", "stats/snapshotIngest", "stat")
     send_latest_stat("replication.bandwidth.outgoing", "stats/replication/bandwidth/outgoing", "stat")
     send_latest_stat("replication.bandwidth.incoming", "stats/replication/bandwidth/incoming", "stat")
