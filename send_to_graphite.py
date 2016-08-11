@@ -11,15 +11,17 @@ METRIC_PREFIX = "rubrik.abe01"
 # How often to gather and send data to Graphite, in seconds
 SEND_INTERVAL_SECS = 300
 SEND_INTERVAL = timedelta(seconds=SEND_INTERVAL_SECS)
+ARMED=True
 
 
 def send_to_graphite(metric, value, timestamp=time.time()):
     message = "%s.%s %s %d\n" % (METRIC_PREFIX, metric.replace(" ", ""), value, int(timestamp))
     print "%s" % message,
-    sock = socket.socket()
-    sock.connect((CARBON_SERVER, CARBON_PORT))
-    sock.sendall(message)
-    sock.close()
+    if ARMED:
+        sock = socket.socket()
+        sock.connect((CARBON_SERVER, CARBON_PORT))
+        sock.sendall(message)
+        sock.close()
 
 
 def send_if_recent(metric_name, value, last_entry):
@@ -54,11 +56,15 @@ def send_cross_compression_stats():
     last_entry = json_results['lastUpdateTime']
     data = json.loads(json_results['value'])
     if send_if_recent("performance.compression.logical_bytes", data['logicalBytes'], last_entry):
+        ratio = float(float(data['logicalBytes']) / float(data['preCompBytes']))
+        reduction = float(100 - ((1 / ratio) * 100))
         send_if_recent("performance.compression.logical_bytes", data['logicalBytes'], last_entry)
         send_if_recent("performance.compression.zero_bytes", data['zeroBytes'], last_entry)
         send_if_recent("performance.compression.precomp_bytes", data['preCompBytes'], last_entry)
         send_if_recent("performance.compression.postcomp_bytes", data['postCompBytes'], last_entry)
         send_if_recent("performance.compression.physical_bytes", data['physicalBytes'], last_entry)
+        send_if_recent("performance.compression.ratio", ratio, last_entry)
+        send_if_recent("performance.compression.reduction", reduction, last_entry)
 
 
 def send_sla_stats():
