@@ -1,19 +1,15 @@
 #!/usr/bin/env python
 
 import urllib2, json, base64, sys, socket, time
-from config import rubrik_user, rubrik_pass, conflux_user, conflux_pass
+from config import rubrik_user, rubrik_pass, conflux_user, conflux_pass, rubrik_host
 from rubriker_token import token, expires
 
-#rubrik_ip = socket.gethostbyname("inetu-rubrik.inetu.net")
-#top_level_url = "https://%s" % rubrik_ip
-rubrik_ip = "127.0.0.1:8000"
-top_level_url = "http://%s" % rubrik_ip
+top_level_url = "http://%s" % rubrik_host
 
 conflux_url = "https://conflux.inetu.net/ConfluxService/RestJson/Devices/?devicetype=SERVER&devicetype=GCCLOUD&devicetype=PRIVCLOUD&devicetype=CUSTOM%20VM"
 token_file = "rubriker_token.py"
 
 conflux_devices = None
-#token = None
 
 def login_to_api():
     print "Logging in to Rubrik..."
@@ -26,7 +22,6 @@ def login_to_api():
 	sys.exit(1)
 
     global token, expires
-    #global token
     token = json_results['token']
     print "Logged in"
     expires = int(time.time() + 10800)
@@ -39,13 +34,11 @@ def login_to_api():
 
 def do_api_call(endpoint, json_data=None):
     global token, expires, top_level_url
-    #global token, top_level_url
     json_results = None
     url =  "%s/%s" % (top_level_url, endpoint)
     request = urllib2.Request(url)
 
     if endpoint != "login":
-        #if token is None:
         if token is None or expires < time.time():
             login_to_api()
         auth_string = base64.encodestring("%s:" % token).replace('\n', '')
