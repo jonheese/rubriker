@@ -38,17 +38,17 @@ def send_latest_stat(metric_name, endpoint, stat_name):
         send_if_recent(metric_name, result[stat_name], result['time'])
 
 
+def send_singleton_stat(metric_name, endpoint):
+    json_results = do_api_call(endpoint)
+    send_if_recent(metric_name, json_results['value'], json_results['lastUpdateTime'])
+
+
 def send_storage_stats():
     json_results = do_api_call("stats/systemStorage")
     last_entry = json_results['lastUpdateTime']
     if send_if_recent("storage.total_storage", json_results['total'], last_entry):
         send_if_recent("storage.used_storage", json_results['used'], last_entry)
         send_if_recent("storage.available_storage", json_results['available'], last_entry)
-
-
-def send_singleton_stat(metric_name, endpoint):
-    json_results = do_api_call(endpoint)
-    send_if_recent(metric_name, json_results['value'], json_results['lastUpdateTime'])
 
 
 def send_cross_compression_stats():
