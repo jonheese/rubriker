@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import urllib2, json, base64, sys, socket, time
-from config import rubrik_user, rubrik_pass, conflux_user, conflux_pass, rubrik_host
+from config import rubrik_user, rubrik_pass, conflux_user, conflux_pass, rubrik_host, bsm_host
 from rubriker_token import token, expires
 
 top_level_url = "http://%s" % rubrik_host
@@ -33,7 +33,7 @@ def login_to_api():
         f.write("expires = %s\n" % expires)
 
 
-def do_api_call(endpoint, json_data=None):
+def do_api_call(endpoint, json_data=None, method="POST"):
     global token, expires, top_level_url
     json_results = None
     url =  "%s/%s" % (top_level_url, endpoint)
@@ -47,6 +47,8 @@ def do_api_call(endpoint, json_data=None):
 
     try:
         if json_data is not None:
+            if method is not "POST":
+                request.get_method = lambda: method
             handle = urllib2.urlopen(request, json_data)
         else:
             handle = urllib2.urlopen(request)

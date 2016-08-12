@@ -18,7 +18,7 @@ for vm in vms:
         break
 
 if vm_id is None or vm_id == "":
-    print "Unable to locate VM named %s, please check the name and try again." % vm_id
+    print "Unable to locate VM named %s, please check the name and try again." % vm_name
     sys.exit(1)
 
 print "Gathering snapshots available for %s..." % vm_name
