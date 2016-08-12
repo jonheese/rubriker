@@ -5,7 +5,8 @@ A quick and dirty API interface tool for interacting with a Rubrik CDM appliance
 Installation
 ------------
 1. `cp config-dist.py config.py`
-2. Edit `config.py` to have the appropriate Rubrik and Conflux credentials, the Rubrik hostname (and port, optionally), and the BSM hostname.
+2. `cp rubriker_token-dist.py rubriker_token.py`
+3. Edit `config.py` to have the appropriate Rubrik and Conflux credentials, the Rubrik hostname (and port, optionally), and the BSM hostname.
 
 Use
 -------
