@@ -11,19 +11,20 @@ token_file = "rubriker_token.py"
 
 conflux_devices = None
 
+
 def login_to_api():
-    print "Logging in to Rubrik..."
+    print("Logging in to Rubrik...")
     json_data = json.dumps({"userId": rubrik_user, "password": rubrik_pass})
     json_results = do_api_call("login", json_data)
 
     if json_results is None or json_results['status'] is None or json_results['status'] != "Success":
-        print "Couldn't log in."
-	print json_results
-	sys.exit(1)
+        print( "Couldn't log in.")
+        print(json_results)
+        sys.exit(1)
 
     global token, expires
     token = json_results['token']
-    print "Logged in"
+    print("Logged in")
     expires = int(time.time() + 10800)
 
     with open(token_file, 'w') as f:
@@ -82,7 +83,7 @@ def do_api_call(endpoint, json_data=None):
 def get_conflux_details_by_short_name(shortname):
     global conflux_devices
     if conflux_devices is None:
-        print "Gathering device data from Conflux..."
+        print("Gathering device data from Conflux...")
         passwd_man = urllib2.HTTPPasswordMgrWithDefaultRealm()
         passwd_man.add_password(
             None,
@@ -121,7 +122,7 @@ def get_conflux_details_by_short_name(shortname):
                     conflux_devices = json_results['Data']
             else:
                 print("API FAILURE: %s" % shortname)
-        print "Done."
+        print("Done.")
 
     for device in conflux_devices:
         if device is not None and device['DeviceName'] == shortname:
@@ -141,4 +142,4 @@ def render_progress_bar(percentage=0, status="", error_info=""):
             prog_bar = "%s>" % prog_bar
         else:
             prog_bar = "%s " % prog_bar
-    print "{0} [{1}] {2}% {3} {4}\r".format("00:00:00", prog_bar, percentage, status, error_info),
+    print("{0} [{1}] {2}% {3} {4}\r".format("00:00:00", prog_bar, percentage, status, error_info),)

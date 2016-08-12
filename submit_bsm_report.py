@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import json, time, calendar, math, re
+import json, time, calendar, math, subprocess
 from rubriker import do_api_call, get_conflux_details_by_short_name
 
 snapshot_counts = dict()
@@ -48,10 +48,8 @@ for job in jobs:
 
     total = int(1024 * 1024 * 1024 * max(1, math.ceil(float(used) / 1024 / 1024 / 1024)))
 
-    if re.search(":::0$", job_id):
-        level = "F"
-    else:
-        level = "I"
+    # Always set level to Synthetic Full, since that's what Rubrik is always doing on the backend
+    level = "S"
 
     snapshot_count = 0
     if vm_id in snapshot_counts.keys():
@@ -62,5 +60,7 @@ for job in jobs:
             snapshot_count = vm_details['snapshotCount']
             snapshot_counts[vm_id] = snapshot_count
 
-    print "%s - %s\tRubrik Backups\t%s\trubrik::%s::%s::%s::%s::%s::::%s::%s::::::::::%s" % (vm_id, fqdn, status, used, total, start_time, end_time, level, snapshot_count, size, misc_data)
-    #print json.dumps(job, indent=3, sort_keys=True)
+    nsca_message = "%s\tRubrik Backups\t%s\trubrik::%s::%s::%s::%s::%s::::%s::%s::::::::::%s\n" % (fqdn, status, used, total, start_time, end_time, level, snapshot_count, size, misc_data)
+    process = subprocess.Popen(['/usr/local/nagios/bin/send_nsca', '-H', 'localhost', '-p', '5667', '-c', '/usr/local/nagios/etc/send_nsca.cfg'], stdin=subprocess.PIPE)
+    process.communicate(nsca_message)
+    print nsca_message,
