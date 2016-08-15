@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import urllib2, json, base64, sys, socket, time
-from config import rubrik_user, rubrik_pass, conflux_user, conflux_pass, rubrik_host, bsm_host
+from config import rubrik_user, rubrik_pass, conflux_user, conflux_pass, rubrik_host, bsm_hosts
 from rubriker_token import token, expires
 
 top_level_url = "http://%s" % rubrik_host

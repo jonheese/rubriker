@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
 import json, time, calendar, math, subprocess
-from rubriker import do_api_call, get_conflux_details_by_short_name, bsm_host
+from rubriker import do_api_call, get_conflux_details_by_short_name, bsm_hosts
 
 snapshot_counts = dict()
 capacity_details = do_api_call("report/systemCapacity/detail")
 
-if bsm_host is None or bsm_host == "":
-    print("bsm_host variable is not set (check config.py).  Exiting...")
+if bsm_hosts is None or len(bsm_hosts) == 0 or bsm_hosts[0] == "":
+    print("bsm_hosts variable is not set (check config.py).  Exiting...")
     sys.exit(1)
 
 json_data = json.dumps({"reportType": "daily"})
@@ -65,6 +65,9 @@ for job in jobs:
             snapshot_counts[vm_id] = snapshot_count
 
     nsca_message = "%s\tRubrik Backups\t%s\trubrik::%s::%s::%s::%s::%s::::%s::%s::::::::::%s\n" % (fqdn, status, used, total, start_time, end_time, level, snapshot_count, size, misc_data)
-    process = subprocess.Popen(['/usr/local/nagios/bin/send_nsca', '-H', bsm_host, '-p', '5667', '-c', '/usr/local/nagios/etc/send_nsca.cfg'], stdin=subprocess.PIPE)
-    process.communicate(nsca_message)
-    print nsca_message,
+
+    for bsm_host in bsm_hosts:
+        process = subprocess.Popen(['/usr/local/nagios/bin/send_nsca', '-H', bsm_host, '-p', '5667', '-c', '/usr/local/nagios/etc/send_nsca.cfg'], stdin=subprocess.PIPE)
+        process.communicate(nsca_message)
+        print nsca_message,
+
