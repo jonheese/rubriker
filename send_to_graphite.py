@@ -51,20 +51,36 @@ def send_storage_stats():
         send_if_recent("storage.available_storage", json_results['available'], last_entry)
 
 
+def send_storage_and_compression_stats():
+    ingested_bytes = None
+    snapshot_bytes = None
+    json_results = do_api_call("stats/ingestedBytes")
+    timestamp = datetime.strptime(json_results['lastUpdateTime'], "%Y-%m-%dT%H:%M:%SZ")
+    if datetime.utcnow() - timestamp <= SEND_INTERVAL:
+        ingested_bytes = json_results['value']
+        send_to_graphite("performance.backend_ingested_bytes", ingested_bytes, (timestamp - datetime.utcfromtimestamp(0)).total_seconds())
+    json_results = do_api_call("stats/physicalSnapshotStorage")
+    timestamp = datetime.strptime(json_results['lastUpdateTime'], "%Y-%m-%dT%H:%M:%SZ")
+    if datetime.utcnow() - timestamp <= SEND_INTERVAL:
+        snapshot_bytes = json_results['value']
+        send_to_graphite("storage.physical_snapshot_storage", snapshot_bytes, (timestamp - datetime.utcfromtimestamp(0)).total_seconds())
+    if ingested_bytes is not None and snapshot_bytes is not None:
+        reduction = (1 - (float(snapshot_bytes) / float(ingested_bytes))) * 100
+        ratio = float(ingested_bytes) / float(snapshot_bytes)
+        send_to_graphite("performance.compression.reduction", reduction, (timestamp - datetime.utcfromtimestamp(0)).total_seconds())
+        send_to_graphite("performance.compression.ratio", ratio, (timestamp - datetime.utcfromtimestamp(0)).total_seconds())
+
+
 def send_cross_compression_stats():
     json_results = do_api_call("stats/crossCompression")
     last_entry = json_results['lastUpdateTime']
     data = json.loads(json_results['value'])
     if send_if_recent("performance.compression.logical_bytes", data['logicalBytes'], last_entry):
-        ratio = float(float(data['logicalBytes']) / float(data['preCompBytes']))
-        reduction = float(100 - ((1 / ratio) * 100))
         send_if_recent("performance.compression.logical_bytes", data['logicalBytes'], last_entry)
         send_if_recent("performance.compression.zero_bytes", data['zeroBytes'], last_entry)
         send_if_recent("performance.compression.precomp_bytes", data['preCompBytes'], last_entry)
         send_if_recent("performance.compression.postcomp_bytes", data['postCompBytes'], last_entry)
         send_if_recent("performance.compression.physical_bytes", data['physicalBytes'], last_entry)
-        send_if_recent("performance.compression.ratio", ratio, last_entry)
-        send_if_recent("performance.compression.reduction", reduction, last_entry)
 
 
 def send_sla_stats():
@@ -119,10 +135,8 @@ def send_all_data():
     send_latest_stat("replication.bandwidth.incoming", "stats/replication/bandwidth/incoming", "stat")
 
     send_singleton_stat("storage.protected_primary_storage", "stats/protectedPrimaryStorage")
-    send_singleton_stat("storage.physical_snapshot_storage", "stats/physicalSnapshotStorage")
     send_singleton_stat("storage.logical_snapshot_storage", "stats/logicalStorage")
     send_singleton_stat("storage.live_snapshot_storage", "stats/liveSnapshotStorage")
-    send_singleton_stat("performance.backend_ingested_bytes", "stats/ingestedBytes")
     send_singleton_stat("storage.cloud_storage", "stats/cloudStorage")
     send_singleton_stat("storage.sla_domain_storage", "stats/slaDomainStorage")
     send_singleton_stat("storage.unprotected_vm_storage", "stats/unprotectedVMStorage")
@@ -133,6 +147,7 @@ def send_all_data():
 
     send_storage_stats()
     send_cross_compression_stats()
+    send_storage_and_compression_stats()
     send_sla_stats()
     send_replication_storage_stats()
     send_archival_storage_stats()
