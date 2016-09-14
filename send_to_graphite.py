@@ -92,11 +92,14 @@ def send_sla_stats():
 
 
 def send_replication_storage_stats():
-    replication_stats = do_api_call("stats/totalReplicationStorage")
-    for remote in replication_stats['remoteVmStorageOnPremise']:
-        send_to_graphite("replication.remote_vm_storage_locally", remote['stat'])
-    for local in replication_stats['localVmStorageAcrossAllTargets']:
-        send_to_graphite("replication.local_vm_storage_remotely", local['stat'])
+    try:
+        replication_stats = do_api_call("stats/totalReplicationStorage")
+        for remote in replication_stats['remoteVmStorageOnPremise']:
+            send_to_graphite("replication.remote_vm_storage_locally.%s" % remote['remoteClusterUuid'], remote['totalStorage'])
+        for local in replication_stats['localVmStorageAcrossAllTargets']:
+            send_to_graphite("replication.local_vm_storage_remotely.%s"% local['remoteClusterUuid'], local['totalStorage'])
+    except:
+        pass
 
 
 def send_archival_storage_stats():
