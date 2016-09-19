@@ -142,7 +142,6 @@ def send_archival_storage_stats(rubriker):
 def send_all_data(rubriker):
     try:
         send_to_graphite(rubriker.location, "system.briks", rubriker.do_api_call("system/brik/count")['count'])
-        send_to_graphite(rubriker.location,"memory.total_memory",rubriker.do_api_call("system/memory/capacity")['bytes'])
         send_to_graphite(rubriker.location, "storage.disk_capacity", rubriker.do_api_call("system/disk/capacity")['bytes'])
         send_to_graphite(rubriker.location, "storage.flash_capacity", rubriker.do_api_call("system/flash/capacity")['bytes'])
         send_to_graphite(rubriker.location, "system.cpu_core_count", rubriker.do_api_call("system/cpuCores/count/*")['count'])
@@ -151,6 +150,7 @@ def send_all_data(rubriker):
         send_to_graphite(rubriker.location, "performance.runway_remaining", rubriker.do_api_call("stats/runwayRemaining")['days'])
         send_to_graphite(rubriker.location, "storage.vms_in_vcenter", rubriker.do_api_call("vm/count")['count'])
         send_to_graphite(rubriker.location, "performance.physical_ingest_per_day", rubriker.do_api_call("stats/physicalIngestPerDay")[0]['stat'])
+        send_to_graphite(rubriker.location, "memory.total_memory", rubriker.do_api_call("system/memory/capacity")['bytes'])
     except Exception as e:
         print e
 

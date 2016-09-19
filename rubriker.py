@@ -30,7 +30,7 @@ class Rubriker(object):
 
 
     def do_api_call(self, endpoint, json_data=None, method="POST"):
-        json_results = None
+        json_results = {}
         url =  "%s/%s" % (self.__rubrik_url, endpoint)
         request = urllib2.Request(url)
 
