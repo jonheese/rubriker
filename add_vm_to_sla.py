@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys, time
+import sys, time, json
 from rubriker import Rubriker
 from config import rubrik_locations
 
@@ -24,19 +24,25 @@ else:
         print "You must specify a VM."
         sys.exit(1)
 
+managed_id = None
 vm_id = None
-vms = rubriker.do_api_call("vm")
-for vm in vms:
-    if vm['name'] == vm_name:
-        vm_id = vm['id']
-        break
+try:
+    vms = rubriker.do_api_call("api/v1/vmware/vm")['data']
+    for vm in vms:
+        if vm['name'] == vm_name:
+            managed_id = vm['managedId']
+            vm_id = vm['id']
+            break
+except Exception as e:
+    print "Unable to locate any data for vm %s" % vm_name
+    exit(0)
 
-if vm_id is None or vm_id == "":
+if managed_id is None or managed_id == "":
     print "Unable to locate VM named %s, please check the name and try again." % vm_name
     sys.exit(1)
 
 desired_sla_id = None
-slas = rubriker.do_api_call("slaDomain")
+slas = rubriker.do_api_call("api/v1/sla_domain")['data']
 if len(sys.argv) > 2:
     sla_name = sys.argv[2]
     for sla in slas:
@@ -54,16 +60,17 @@ else:
     index = int(raw_input("Selection? ")) - 1
     desired_sla_id = slas[index]['id']
 
-json_data = "{\"slaDomainId\": \"%s\"}" % desired_sla_id
-vm_data = rubriker.do_api_call("vm/%s" % vm_id, json_data, 'PATCH')
+print "Assigning managed_id %s to sla_id %s" % (managed_id, desired_sla_id)
+json_data = "{\"managedIds\": [ \"%s\" ] }" % managed_id
+rubriker.do_api_call("api/v1/sla_domain/%s/assign_sync" % desired_sla_id, json_data)
 
-confd_sla_id = vm_data['configuredSlaDomainId']
-if confd_sla_id == desired_sla_id:
-    sla_name = "ERROR!"
-    for sla in slas:
-        if sla['id'] == confd_sla_id:
-            confd_sla_name = sla['name']
-            break
-    print "Successfully set SLA for VM %s to %s" % (vm_name, confd_sla_name)
-else:
+vm_data = rubriker.do_api_call("api/v1/vmware/vm/%s" % vm_id)
+try:
+    confd_sla_id = vm_data['slaDomain']['id']
+    if confd_sla_id == desired_sla_id:
+        sla_name = vm_data['slaDomain']['name']
+        print "Successfully set SLA for VM %s to %s" % (vm_name, sla_name)
+    else:
+        raise Exception()
+except Exception as e:
     print "There was an error setting the SLA to %s for VM %s.  Please check the Rubrik interface." % (desired_sla_id, vm_name)

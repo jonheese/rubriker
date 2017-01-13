@@ -11,7 +11,7 @@ for location in rubrik_locations.keys():
     rubriker = Rubriker(location, rubrik_user, rubrik_pass, rubrik_url)
 
     print "Looking up VMs in Rubrik API..."
-    vms = rubriker.do_api_call("report/slaCompliance/detail")
+    vms = rubriker.do_api_call("api/v1/report/sla_compliance/detail")['data']
     print "Done."
 
     found = 0
@@ -20,7 +20,7 @@ for location in rubrik_locations.keys():
     for vm in vms:
         sla_name = vm['slaDomainName']
         if sla_name is not None and sla_name != "Unprotected":
-            vm_name = vm['vmName']
+            vm_name = vm['objectName']
             compliant = vm['isSlaCompliant']
             device = rubriker.get_conflux_details_by_short_name(vm_name)
             if device is not None:
