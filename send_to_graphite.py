@@ -2,12 +2,8 @@
 
 import socket, time, json, sys
 from datetime import datetime, timedelta
-from config import rubrik_locations
+from config import rubrik_locations, carbon_server, carbon_port, metric_prefix
 from rubriker import Rubriker
-
-CARBON_SERVER = "inetu-grphite01.inetu.net"
-CARBON_PORT = 2003
-METRIC_PREFIX = "rubrik"
 
 # How often to gather and send data to Graphite, in seconds
 SEND_INTERVAL_SECS = 300
@@ -16,11 +12,11 @@ ARMED=True
 
 
 def send_to_graphite(location, metric, value, timestamp=time.time()):
-    message = "%s.%s.%s %s %d\n" % (METRIC_PREFIX, location, metric.replace(" ", ""), value, int(timestamp))
+    message = "%s.%s.%s %s %d\n" % (metric_prefix, location, metric.replace(" ", ""), value, int(timestamp))
     print "%s" % message,
     if ARMED:
         sock = socket.socket()
-        sock.connect((CARBON_SERVER, CARBON_PORT))
+        sock.connect((carbon_server, carbon_port))
         sock.sendall(message)
         sock.close()
 
