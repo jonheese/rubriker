@@ -22,10 +22,12 @@ else:
     vm_name = raw_input("Enter VM name: ")
 
 vm_id = None
-vms = rubriker.do_api_call("vm")
+host_id = None
+vms = rubriker.do_api_call("api/v1/vmware/vm")['data']
 for vm in vms:
     if vm['name'] == vm_name:
         vm_id = vm['id']
+        host_id = vm['hostId']
         break
 
 if vm_id is None or vm_id == "":
@@ -33,7 +35,7 @@ if vm_id is None or vm_id == "":
     sys.exit(1)
 
 print "Gathering snapshots available for %s (id: %s)..." % (vm_name, vm_id)
-snapshots = rubriker.do_api_call("snapshot?vm=%s" % vm_id)
+snapshots = rubriker.do_api_call("api/v1/vmware/vm/%s/snapshot" % vm_id)['data']
 if snapshots is None or len(snapshots) <= 0:
     print "No snapshots found for VM %s." % vm_name
     sys.exit(0)
@@ -47,51 +49,42 @@ index = int(raw_input("Selection? ")) - 1
 
 snapshot_id = snapshots[index]['id']
 
-print "Getting ESXi host for VM %s..." % vm_name
-host_id = ""
-vms = rubriker.do_api_call("vm")
-for vm in vms:
-    if vm['id'] == vm_id:
-        host_id = vm['hostId']
-        break
-
 print "Getting datastore for VM %s..." % vm_name
-datastore_name = ""
-vm = rubriker.do_api_call("vm/%s" % vm_id)
+datastore_name = None
+vm = rubriker.do_api_call("api/v1/vmware/vm/%s" % vm_id)['data']
 virtual_disk_ids = vm['virtualDiskIds']
 
-datastores = rubriker.do_api_call("datastore")
+datastores = rubriker.do_api_call("api/v1/vmware/datastore")['']
 for datastore in datastores:
     datastore_id = datastore['id']
-    ds_detail = rubriker.do_api_call("datastore/%s" % datastore_id)
+    ds_detail = rubriker.do_api_call("api/v1/vmware/datastore/%s" % datastore_id)
     if "virtualDisks" in ds_detail.keys():
         virtual_disks = ds_detail['virtualDisks']
         for virtual_disk in virtual_disks:
             if virtual_disk['id'] in virtual_disk_ids:
                 datastore_name = datastore['name']
                 break
+    if datastore_name is not None:
+        break
 
-json_data = "{\"snapshotId\": \"%s\", \"hostId\": \"%s\", \"vmName\": \"%s_LIVE_MOUNT\", \"dataStoreName\": \"%s\", \"disableNetwork\": true, \"removeNetworkDevices\": true}" % (snapshot_id, host_id, vm_name, datastore_name)
+if datastore_name is None:
+    print "Unable to locate datastore for vm %s" % vm_name
+    sys.exit(0)
+
+json_data = "{\"snapshotId\": \"%s\", \"hostId\": \"%s\", \"vmName\": \"%s_LIVE_MOUNT\", \"dataStoreName\": \"%s\", \"disableNetwork\": true, \"removeNetworkDevices\": true, \"powerOn\": true}" % (snapshot_id, host_id, vm_name, datastore_name)
 
 print "Submitting mount request for VM %s (%s)..." % (vm_name, vm_id)
-job_id = rubriker.do_api_call("job/type/mount", json_data)
+mount_id = rubriker.do_api_call("api/v1/vmware/vm/mount", json_data)['id']
 
-while job_id is not None:
-    progress = rubriker.do_api_call("job/instance/%s" % job_id)
-    percentage = 0
-    status = ""
-    error_info = ""
-    if progress is not None:
-        if "jobProgress" in progress.keys():
-            percentage = progress['jobProgress']
-        if "status" in progress.keys():
-            status = progress['status']
-        if "errorInfo" in progress.keys():
-            error_info = progress['errorInfo']
-        rubriker.render_progress_bar(percentage, status, error_info)
-        if "endTime" in progress.keys():
-            job_id = None
-            print
-#        else:
-#            time.sleep(0.25)
-print "Complete."
+
+mount_ready = None
+while mount_id is not None:
+    mount_data = rubriker.do_api_call("api/v1/vmware/vm/mount/%s" % mount_id)
+    if mount_data is not None:
+        if mount_ready != mount_data['isReady']:
+            mount_ready = mount_data['isReady']
+            if mount_ready != 1 and mount_data['isReady'] != "1":
+                print "Waiting for live mount to complete..."
+            else:
+                print "Live mount complete."
+        time.sleep(1)

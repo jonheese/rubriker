@@ -1,2 +1,0 @@
-token = ""
-expires = 0

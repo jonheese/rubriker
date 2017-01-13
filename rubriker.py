@@ -16,10 +16,10 @@ class Rubriker(object):
 
     def login_to_api(self):
         print("Logging in to Rubrik at URL %s..." % self.__rubrik_url)
-        json_data = json.dumps({"userId": self.__rubrik_user, "password": self.__rubrik_pass})
-        json_results = self.do_api_call("login", json_data)
+        json_data = json.dumps({"username": self.__rubrik_user, "password": self.__rubrik_pass})
+        json_results = self.do_api_call("api/v1/login", json_data)
 
-        if json_results is None or json_results['status'] is None or json_results['status'] != "Success":
+        if json_results is None or json_results['token'] is None:
             print( "Couldn't log in.")
             print(json_results)
             sys.exit(1)
@@ -34,7 +34,7 @@ class Rubriker(object):
         url =  "%s/%s" % (self.__rubrik_url, endpoint)
         request = urllib2.Request(url)
 
-        if endpoint != "login":
+        if endpoint != "api/v1/login":
             if self.__rubrik_token is None or self.__rubrik_token_expires < time.time():
                 self.login_to_api()
             auth_string = base64.encodestring("%s:" % self.__rubrik_token).replace('\n', '')
@@ -50,9 +50,10 @@ class Rubriker(object):
             output = handle.read()
 
             try:
-               json_results = json.loads(output)
+               if output is not None and output != "":
+                   json_results = json.loads(output)
             except Exception:
-                print("Failure parsing JSON data")
+                print("Failure parsing JSON data: %s" % output)
         except urllib2.URLError as url_e:
             if hasattr(url_e, "reason"):
                 if url_e.reason == "Unauthorized":
