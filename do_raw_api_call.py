@@ -24,4 +24,12 @@ if api_call is None or api_call == "":
     print "You must enter an API endpoint."
     sys.exit(1)
 
-print json.dumps(rubriker.do_api_call(api_call), sort_keys=True, indent=4, separators=(',',': '))
+if len(sys.argv) > 2:
+    method = sys.argv[2]
+else:
+    method = raw_input("Enter desired HTTP method (GET, POST, etc.): ")
+
+if not api_call.startswith("api/v1"):
+    api_call = "api/v1/%s" % api_call
+
+print json.dumps(rubriker.do_api_call(api_call, method=method), sort_keys=True, indent=4, separators=(',',': '))

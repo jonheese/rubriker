@@ -16,10 +16,9 @@ class Rubriker(object):
 
     def login_to_api(self):
         print("Logging in to Rubrik at URL %s..." % self.__rubrik_url)
-        json_data = json.dumps({"username": self.__rubrik_user, "password": self.__rubrik_pass})
-        json_results = self.do_api_call("api/v1/login", json_data)
+        json_results = self.do_api_call("api/v1/session", json_data="{}")
 
-        if json_results is None or json_results['token'] is None:
+        if json_results is None or len(json_results) == 0 or json_results['token'] is None:
             print( "Couldn't log in.")
             print(json_results)
             sys.exit(1)
@@ -34,10 +33,12 @@ class Rubriker(object):
         url =  "%s/%s" % (self.__rubrik_url, endpoint)
         request = urllib2.Request(url)
 
-        if endpoint != "api/v1/login":
+        if endpoint != "api/v1/session":
             if self.__rubrik_token is None or self.__rubrik_token_expires < time.time():
                 self.login_to_api()
-            auth_string = base64.encodestring("%s:" % self.__rubrik_token).replace('\n', '')
+            request.add_header("Authorization", "Bearer %s" % self.__rubrik_token)
+        else:
+            auth_string = base64.b64encode(("%s:%s" % (self.__rubrik_user, self.__rubrik_pass)).replace('\n', ''))
             request.add_header("Authorization", "Basic %s" % auth_string)
 
         try:
@@ -56,6 +57,7 @@ class Rubriker(object):
                 print("Failure parsing JSON data: %s" % output)
         except urllib2.URLError as url_e:
             if hasattr(url_e, "reason"):
+                print("Got error: %s, hitting URL: %s, with method: %s" % (url_e.reason, url, method))
                 if url_e.reason == "Unauthorized":
                     self.__rubrik_token_expires = 0
                     json_results = self.do_api_call(endpoint, json_data, method)
