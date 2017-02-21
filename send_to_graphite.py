@@ -46,7 +46,7 @@ def send_singleton_stat(rubriker, metric_name, endpoint):
 
 def send_storage_stats(rubriker):
     try:
-        json_results = rubriker.do_api_call("api/v1/stats/system_storage")
+        json_results = rubriker.do_api_call("api/internal/stats/system_storage")
         last_entry = json_results['lastUpdateTime']
         if send_if_recent(rubriker.location, "storage.total_storage", json_results['total'], last_entry):
             send_if_recent(rubriker.location, "storage.used_storage", json_results['used'], last_entry)
@@ -59,12 +59,12 @@ def send_storage_and_compression_stats(rubriker):
     try:
         ingested_bytes = None
         snapshot_bytes = None
-        json_results = rubriker.do_api_call("api/v1/stats/snapshot_storage/ingested")
+        json_results = rubriker.do_api_call("api/internal/stats/snapshot_storage/ingested")
         timestamp = datetime.strptime(json_results['lastUpdateTime'], "%Y-%m-%dT%H:%M:%SZ")
         if datetime.utcnow() - timestamp <= SEND_INTERVAL:
             ingested_bytes = json_results['value']
             send_to_graphite(rubriker.location, "performance.backend_ingested_bytes", ingested_bytes, (timestamp - datetime.utcfromtimestamp(0)).total_seconds())
-        json_results = rubriker.do_api_call("api/v1/stats/snapshot_storage/physical")
+        json_results = rubriker.do_api_call("api/internal/stats/snapshot_storage/physical")
         timestamp = datetime.strptime(json_results['lastUpdateTime'], "%Y-%m-%dT%H:%M:%SZ")
         if datetime.utcnow() - timestamp <= SEND_INTERVAL:
             snapshot_bytes = json_results['value']
@@ -80,7 +80,7 @@ def send_storage_and_compression_stats(rubriker):
 
 def send_cross_compression_stats(rubriker):
     try:
-        json_results = rubriker.do_api_call("api/v1/stats/cross_compression")
+        json_results = rubriker.do_api_call("api/internal/stats/cross_compression")
         last_entry = json_results['lastUpdateTime']
         data = json.loads(json_results['value'])
         if send_if_recent(rubriker.location, "performance.compression.logical_bytes", data['logicalBytes'], last_entry):
@@ -98,7 +98,7 @@ def send_sla_stats(rubriker):
         sla_domains = rubriker.do_api_call("api/v1/sla_domain?primary_cluster_id=local")['data']
         for sla_domain in sla_domains:
             (sla_name, sla_id) = (sla_domain['name'], sla_domain['id'])
-            send_singleton_stat(rubriker, "storage.sla_domain_storage.%s" % sla_name, "api/v1/stats/sla_domain_storage/%s" % sla_id)
+            send_singleton_stat(rubriker, "storage.sla_domain_storage.%s" % sla_name, "api/internal/stats/sla_domain_storage/%s" % sla_id)
             send_to_graphite(rubriker.location, "storage.vms_protected.%s" % sla_name, sla_domain['numVms'])
     except Exception as e:
         print e
@@ -106,7 +106,7 @@ def send_sla_stats(rubriker):
 
 def send_replication_storage_stats(rubriker):
     try:
-        replication_stats = rubriker.do_api_call("api/v1/stats/total_replication_storage")
+        replication_stats = rubriker.do_api_call("api/internal/stats/total_replication_storage")
         for remote in replication_stats['remoteVmStorageOnPremise']:
             send_to_graphite(rubriker.location, "replication.remote_vm_storage_locally.%s" % remote['remoteClusterUuid'], remote['totalStorage'])
         for local in replication_stats['localVmStorageAcrossAllTargets']:
@@ -117,8 +117,8 @@ def send_replication_storage_stats(rubriker):
 
 def send_archival_storage_stats(rubriker):
     try:
-        archival_location_details = rubriker.do_api_call("api/v1/data_location/archival_location")['data']
-        archival_location_storage = rubriker.do_api_call("api/v1/stats/data_location/usage")['data']
+        archival_location_details = rubriker.do_api_call("api/internal/data_location/archival_location")['data']
+        archival_location_storage = rubriker.do_api_call("api/internal/stats/data_location/usage")['data']
         for archival_location in archival_location_storage:
             archival_location_name = None
             archival_location_id = archival_location['locationId']
@@ -137,7 +137,7 @@ def send_archival_storage_stats(rubriker):
 
 def send_all_data(rubriker):
     try:
-        send_to_graphite(rubriker.location, "system.briks", rubriker.do_api_call("api/v1/cluster/me/brik_count")['count'])
+        send_to_graphite(rubriker.location, "system.briks", rubriker.do_api_call("api/internal/cluster/me/brik_count")['count'])
         send_to_graphite(rubriker.location, "storage.disk_capacity", rubriker.do_api_call("api/v1/cluster/me/disk_capacity")['bytes'])
         send_to_graphite(rubriker.location, "storage.flash_capacity", rubriker.do_api_call("api/v1/cluster/me/flash_capacity")['bytes'])
         send_to_graphite(rubriker.location, "system.cpu_core_count", rubriker.do_api_call("api/v1/node/*/cpu_cores_count")['count'])
@@ -151,21 +151,21 @@ def send_all_data(rubriker):
         print e
 
     try:
-        send_latest_stat(rubriker, "performance.logical_ingest", "api/v1/stats/logical_ingest/time_series", "stat")
-        send_latest_stat(rubriker, "performance.physical_ingest", "api/v1/stats/physical_ingest/time_series", "stat")
-        send_latest_stat(rubriker, "performance.snapshot_ingest", "api/v1/stats/snapshot_ingest/time_series", "stat")
-        send_latest_stat(rubriker, "replication.bandwidth.outgoing", "api/v1/stats/replication/outgoing/time_series", "stat")
-        send_latest_stat(rubriker, "replication.bandwidth.incoming", "api/v1/stats/replication/incoming/time_series", "stat")
+        send_latest_stat(rubriker, "performance.logical_ingest", "api/internal/stats/logical_ingest/time_series", "stat")
+        send_latest_stat(rubriker, "performance.physical_ingest", "api/internal/stats/physical_ingest/time_series", "stat")
+        send_latest_stat(rubriker, "performance.snapshot_ingest", "api/internal/stats/snapshot_ingest/time_series", "stat")
+        send_latest_stat(rubriker, "replication.bandwidth.outgoing", "api/internal/stats/replication/outgoing/time_series", "stat")
+        send_latest_stat(rubriker, "replication.bandwidth.incoming", "api/internal/stats/replication/incoming/time_series", "stat")
     except Exception as e:
         print e
 
     try:
-        send_singleton_stat(rubriker, "storage.protected_primary_storage", "api/v1/stats/protected_primary_storage")
-        send_singleton_stat(rubriker, "storage.logical_snapshot_storage", "api/v1/stats/snapshot_storage/logical")
-        send_singleton_stat(rubriker, "storage.live_snapshot_storage", "api/v1/stats/snapshot_storage/live")
-        send_singleton_stat(rubriker, "storage.cloud_storage", "api/v1/stats/cloud_storage")
-        send_singleton_stat(rubriker, "storage.sla_domain_storage", "api/v1/stats/sla_domain_storage")
-        send_singleton_stat(rubriker, "storage.unprotected_vm_storage", "api/v1/stats/unprotected_snappable_storage")
+        send_singleton_stat(rubriker, "storage.protected_primary_storage", "api/internal/stats/protected_primary_storage")
+        send_singleton_stat(rubriker, "storage.logical_snapshot_storage", "api/internal/stats/snapshot_storage/logical")
+        send_singleton_stat(rubriker, "storage.live_snapshot_storage", "api/internal/stats/snapshot_storage/live")
+        send_singleton_stat(rubriker, "storage.cloud_storage", "api/internal/stats/cloud_storage")
+        send_singleton_stat(rubriker, "storage.sla_domain_storage", "api/internal/stats/sla_domain_storage")
+        send_singleton_stat(rubriker, "storage.unprotected_vm_storage", "api/internal/stats/unprotected_snappable_storage")
     except Exception as e:
         print e
 

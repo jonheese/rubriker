@@ -47,7 +47,7 @@ class Rubriker(object):
                     request.get_method = lambda: method
                 handle = urllib2.urlopen(request, json_data)
             else:
-               handle = urllib2.urlopen(request)
+                handle = urllib2.urlopen(request)
             output = handle.read()
 
             try:
