@@ -138,15 +138,15 @@ def send_archival_storage_stats(rubriker):
 def send_all_data(rubriker):
     try:
         send_to_graphite(rubriker.location, "system.briks", rubriker.do_api_call("api/internal/cluster/me/brik_count")['count'])
-        send_to_graphite(rubriker.location, "storage.disk_capacity", rubriker.do_api_call("api/v1/cluster/me/disk_capacity")['bytes'])
-        send_to_graphite(rubriker.location, "storage.flash_capacity", rubriker.do_api_call("api/v1/cluster/me/flash_capacity")['bytes'])
-        send_to_graphite(rubriker.location, "system.cpu_core_count", rubriker.do_api_call("api/v1/node/*/cpu_cores_count")['count'])
-        send_to_graphite(rubriker.location, "performance.streams", rubriker.do_api_call("api/v1/stats/streams/count")['count'])
-        send_to_graphite(rubriker.location, "storage.average_storage_growth_per_day", rubriker.do_api_call("api/v1/stats/average_storage_growth_per_day")['bytes'])
-        send_to_graphite(rubriker.location, "performance.runway_remaining", rubriker.do_api_call("api/v1/stats/runway_remaining")['days'])
-        send_to_graphite(rubriker.location, "storage.vms_in_vcenter", rubriker.do_api_call("api/v1/vmware/vm/count")['count'])
-        send_to_graphite(rubriker.location, "performance.physical_ingest_per_day", rubriker.do_api_call("api/v1/stats/physical_ingest_per_day/time_series")[0]['stat'])
-        send_to_graphite(rubriker.location, "memory.total_memory", rubriker.do_api_call("api/v1/cluster/me/memory_capacity")['bytes'])
+        send_to_graphite(rubriker.location, "storage.disk_capacity", rubriker.do_api_call("api/internal/cluster/me/disk_capacity")['bytes'])
+        send_to_graphite(rubriker.location, "storage.flash_capacity", rubriker.do_api_call("api/internal/cluster/me/flash_capacity")['bytes'])
+        send_to_graphite(rubriker.location, "system.cpu_core_count", rubriker.do_api_call("api/internal/node/*/cpu_cores_count")['count'])
+        send_to_graphite(rubriker.location, "performance.streams", rubriker.do_api_call("api/internal/stats/streams/count")['count'])
+        send_to_graphite(rubriker.location, "storage.average_storage_growth_per_day", rubriker.do_api_call("api/internal/stats/average_storage_growth_per_day")['bytes'])
+        send_to_graphite(rubriker.location, "performance.runway_remaining", rubriker.do_api_call("api/internal/stats/runway_remaining")['days'])
+        send_to_graphite(rubriker.location, "storage.vms_in_vcenter", rubriker.do_api_call("api/internal/vmware/vm/count")['count'])
+        send_to_graphite(rubriker.location, "performance.physical_ingest_per_day", rubriker.do_api_call("api/internal/stats/physical_ingest_per_day/time_series")[0]['stat'])
+        send_to_graphite(rubriker.location, "memory.total_memory", rubriker.do_api_call("api/internal/cluster/me/memory_capacity")['bytes'])
     except Exception as e:
         print e
 
