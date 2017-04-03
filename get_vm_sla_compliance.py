@@ -3,6 +3,20 @@
 from config import rubrik_locations
 from rubriker import Rubriker
 
+
+def get_rubrik_report(report_name):
+    rubrik_reports = rubriker.do_api_call("api/internal/report?report_type=Canned")['data']
+    report_id = None
+    for report in rubrik_reports:
+        if report['reportName'] == report_name:
+            report_id = report['id']
+            break
+    if report_id == None or report_id == "":
+        return None
+
+    return rubriker.do_api_call("api/internal/report/%s/table?timezone_offset=0&limit=1000000" % report_id)['data']
+
+
 for location in rubrik_locations.keys():
     config_dict = rubrik_locations[location]
     rubrik_user = config_dict["rubrik_user"]
@@ -11,7 +25,7 @@ for location in rubrik_locations.keys():
     rubriker = Rubriker(location, rubrik_user, rubrik_pass, rubrik_url)
 
     print "Looking up VMs in Rubrik API..."
-    vms = rubriker.do_api_call("api/v1/report/sla_compliance/detail")['data']
+    vms = get_rubrik_report("SlaComplianceSummary")
     print "Done."
 
     found = 0
