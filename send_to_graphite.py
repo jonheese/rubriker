@@ -130,7 +130,7 @@ def send_archival_storage_stats(rubriker):
                 send_to_graphite(rubriker.location, "archive.bytes_downloaded.%s" % archival_location_name, archival_location['dataDownloaded'])
                 send_to_graphite(rubriker.location, "archive.bytes_archived.%s" % archival_location_name, archival_location['dataArchived'])
                 send_to_graphite(rubriker.location, "archive.vms_archived.%s" % archival_location_name, archival_location['numVMsArchived'])
-                send_latest_stat(rubriker, "archive.bandwidth.%s" % archival_location_name, "stats/archival/bandwidth?data_location_id=%s" % archival_location_id, "stat")
+                send_latest_stat(rubriker, "archive.bandwidth.%s" % archival_location_name, "api/internal/stats/archival/bandwidth/time_series?data_location_id=%s" % archival_location_id, "stat")
     except Exception as e:
         print e
 
