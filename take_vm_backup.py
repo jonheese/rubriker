@@ -50,7 +50,7 @@ for vm_name in vm_names:
     job_id = None
     if "status" in json_results.keys():
         status = json_results['status']
-        if status == "Success" or status == "QUEUED":
+        if status == "Success" or status == "QUEUED" or status == "ACQUIRED":
             job_id = json_results['id']
             print "Successfully submited job for %s" % vm_name
         else:
