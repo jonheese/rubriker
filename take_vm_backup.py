@@ -39,7 +39,7 @@ for vm_name in vm_names:
             break
 
     if vm_id is None or vm_id == "":
-        print "Unable to locate VM named %s, please check the name and try again." % vm_id
+        print "Unable to locate VM named %s, please check the name and try again." % vm_name
         continue
         #sys.exit(1)
 
