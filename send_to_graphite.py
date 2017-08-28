@@ -117,7 +117,7 @@ def send_replication_storage_stats(rubriker):
 
 def send_archival_storage_stats(rubriker):
     try:
-        archival_location_details = rubriker.do_api_call("api/internal/data_location/archival_location")['data']
+        archival_location_details = rubriker.do_api_call("api/internal/archive/location")['data']
         archival_location_storage = rubriker.do_api_call("api/internal/stats/data_location/usage")['data']
         for archival_location in archival_location_storage:
             archival_location_name = None
