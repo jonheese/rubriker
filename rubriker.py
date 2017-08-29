@@ -28,7 +28,7 @@ class Rubriker(object):
         self.__rubrik_token_expires = int(time.time() + 10800)
 
 
-    def do_api_call(self, endpoint, json_data=None, method="POST"):
+    def do_api_call(self, endpoint, json_data=None, method="POST", quiet=False):
         json_results = {}
         url =  "%s/%s" % (self.__rubrik_url, endpoint)
         request = urllib2.Request(url)
@@ -57,18 +57,19 @@ class Rubriker(object):
                 print("Failure parsing JSON data: %s" % output)
         except urllib2.URLError as url_e:
             if hasattr(url_e, "reason"):
-                print("Got error: %s, hitting URL: %s, with method: %s" % (url_e.reason, url, method))
+                if not quiet:
+                    print("Got error: %s, hitting URL: %s, with method: %s" % (url_e.reason, url, method))
                 if url_e.reason == "Unauthorized":
                     self.__rubrik_token_expires = 0
                     json_results = self.do_api_call(endpoint, json_data, method)
-                else:
+                elif not quiet:
                     print(
                         "We failed to reach the Rubrik API."
                         " URL: %s"
                         " Reason: %s" %
                         (url, url_e.reason)
                     )
-            elif hasattr(url_e, "code"):
+            elif hasattr(url_e, "code") and not quiet:
                 print(
                     "Rubrik API couldn't fulfill the request."
                     " URL: %s"

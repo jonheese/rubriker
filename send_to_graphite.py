@@ -99,6 +99,11 @@ def send_sla_stats(rubriker):
         for sla_domain in sla_domains:
             (sla_name, sla_id) = (sla_domain['name'], sla_domain['id'])
             send_singleton_stat(rubriker, "storage.sla_domain_storage.%s" % sla_name, "api/internal/stats/sla_domain_storage/%s" % sla_id)
+            send_to_graphite(rubriker.location, "storage.windows_hosts_protected.%s" % sla_name, sla_domain['numWindowsHosts'])
+            send_to_graphite(rubriker.location, "storage.linux_hosts_protected.%s" % sla_name, sla_domain['numLinuxHosts'])
+            send_to_graphite(rubriker.location, "storage.filesets_protected.%s" % sla_name, sla_domain['numFilesets'])
+            send_to_graphite(rubriker.location, "storage.shares_protected.%s" % sla_name, sla_domain['numShares'])
+            send_to_graphite(rubriker.location, "storage.dbs_protected.%s" % sla_name, sla_domain['numDbs'])
             send_to_graphite(rubriker.location, "storage.vms_protected.%s" % sla_name, sla_domain['numVms'])
     except Exception as e:
         print e
@@ -117,7 +122,10 @@ def send_replication_storage_stats(rubriker):
 
 def send_archival_storage_stats(rubriker):
     try:
-        archival_location_details = rubriker.do_api_call("api/internal/archive/location")['data']
+        try:
+            archival_location_details = rubriker.do_api_call("api/internal/data_location/archival_location", quiet=True)['data']
+        except Exception as e:
+            archival_location_details = rubriker.do_api_call("api/internal/archive/location")['data']
         archival_location_storage = rubriker.do_api_call("api/internal/stats/data_location/usage")['data']
         for archival_location in archival_location_storage:
             archival_location_name = None
