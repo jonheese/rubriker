@@ -201,3 +201,4 @@ for location in rubrik_locations.keys():
     rubrik_url = config_dict["rubrik_url"]
     rubriker = Rubriker(location, rubrik_user, rubrik_pass, rubrik_url)
     send_all_data(rubriker)
+    rubriker.logout_of_api()

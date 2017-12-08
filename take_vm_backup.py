@@ -5,20 +5,27 @@ from rubriker import Rubriker
 from config import rubrik_locations
 
 
+quiet = False
 print "This will take an on-demand snapshot backup of the provided VM."
-location_names = rubrik_locations.keys()
-index = 1
-for location_name in location_names:
-    print "%d. %s" % (index, location_name)
-    index += 1
-index = int(raw_input("Choose a Rubrik cluster: ")) - 1
-location_name = location_names[index]
+if len(sys.argv) > 1:
+    location_name = sys.argv[1]
+    arg_offset = 1
+    quiet = True
+else:
+    location_names = rubrik_locations.keys()
+    index = 1
+    for location_name in location_names:
+        print "%d. %s" % (index, location_name)
+        index += 1
+    index = int(raw_input("Choose a Rubrik cluster: ")) - 1
+    location_name = location_names[index]
+
 config_dict = rubrik_locations[location_name]
 rubriker = Rubriker(location_name, config_dict["rubrik_user"], config_dict["rubrik_pass"], config_dict["rubrik_url"])
 
 vm_names = []
 if len(sys.argv) > 1:
-    vm_names = sys.argv[1:]
+    vm_names = sys.argv[2:]
 else:
     vm_names[0] = raw_input("Enter VM name: ")
 
@@ -65,22 +72,26 @@ for vm_name in vm_names:
     status = ""
     error_info = "None"
 
-    while job_id is not None:
-        json_data = "{\"jobId\": \"%s\"}" % job_id
-        request_status = rubriker.do_api_call("api/v1/vmware/vm/request/%s" % job_id)
-        if request_status is not None:
-            if request_status['status'] != status or request_status['progress'] != progress:
-                if "progress" in request_status:
-                    progress = request_status['progress']
-                else:
-                    progress = None
-                status = request_status['status']
-                print "Status: %s, Progress: %s             Error: %s" % (status, progress, error_info)
-            if 'error' in request_status.keys() and request_status['error'] is not None and request_status['error']['message'] != error_info:
-                error_info = request_status['error']['message']
-                print "Status: %s             Error: %s" % (status, error_info)
+    if not quiet:
+        while job_id is not None:
+            json_data = "{\"jobId\": \"%s\"}" % job_id
+            request_status = rubriker.do_api_call("api/v1/vmware/vm/request/%s" % job_id)
+            if request_status is not None:
+                if request_status['status'] != status or request_status['progress'] != progress:
+                    if "progress" in request_status:
+                        progress = request_status['progress']
+                    else:
+                        progress = None
+                    status = request_status['status']
+                    print "Status: %s, Progress: %s             Error: %s" % (status, progress, error_info)
+                if 'error' in request_status.keys() and request_status['error'] is not None and request_status['error']['message'] != error_info:
+                    error_info = request_status['error']['message']
+                    print "Status: %s             Error: %s" % (status, error_info)
 
-            if status == "FAILED" or status == "SUCCEEDED":
-                break
-            time.sleep(1)
+                if status == "FAILED" or status == "SUCCEEDED":
+                    break
+                time.sleep(1)
+    else:
+        print "Job queued successfully."
+        continue
     print "Complete."

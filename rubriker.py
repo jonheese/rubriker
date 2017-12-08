@@ -14,6 +14,7 @@ class Rubriker(object):
         self.__rubrik_token_expires = 0
         self.__conflux_devices = None
 
+
     def login_to_api(self):
         print("Logging in to Rubrik at URL %s..." % self.__rubrik_url)
         json_results = self.do_api_call("api/v1/session", json_data="{}")
@@ -26,6 +27,11 @@ class Rubriker(object):
         self.__rubrik_token = json_results['token']
         print("Logged in, token: %s" % self.__rubrik_token)
         self.__rubrik_token_expires = int(time.time() + 10800)
+
+
+    def logout_of_api(self):
+        print("Logging out of Rubrik API")
+        self.do_api_call("api/v1/session/me", json_data="{}", method="DELETE")
 
 
     def do_api_call(self, endpoint, json_data=None, method="POST", quiet=False):
