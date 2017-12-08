@@ -33,3 +33,4 @@ if not api_call.startswith("api/v1") and not api_call.startswith("api/internal")
     api_call = "api/v1/%s" % api_call
 
 print json.dumps(rubriker.do_api_call(api_call, method=method), sort_keys=True, indent=4, separators=(',',': '))
+rubriker.logout_of_api()
