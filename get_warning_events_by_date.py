@@ -1,12 +1,15 @@
+#!/usr/bin/python
+
 import socket, time, json, sys
 from datetime import datetime, timedelta
 from config import rubrik_locations
 from rubriker import Rubriker
 
 
+location_name = "abe01lab"
 start_date="2018-01-07"
 end_date="2018-01-08"
-config_dict = rubrik_locations["abe01"]
+config_dict = rubrik_locations[location_name]
 
 results = {}
 
