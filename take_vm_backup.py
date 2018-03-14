@@ -40,8 +40,7 @@ for vm_name in vm_names:
             if "configuredSlaDomainId" in vm:
                 sla_id = vm['configuredSlaDomainId']
             else:
-		# if the VM doesn't have an SLA today, just grab the third one, because
-                #     it happens that the third SLA in abe01 is "Daily - 14d" (this is kinda shitty)
+                # if the VM doesn't have an SLA today, just pick the first one, so it doesn't exist forever
                 sla_id = rubriker.do_api_call("api/v1/sla_domain", method="GET")["data"][0]["id"]
             break
 
