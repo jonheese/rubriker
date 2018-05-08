@@ -1,3 +1,4 @@
 *.pyc
 config.py
 rubriker_token.py
+*.swp

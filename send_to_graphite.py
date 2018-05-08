@@ -23,7 +23,7 @@ def send_to_graphite(location, metric, value, timestamp=time.time()):
 
 def send_if_recent(location, metric_name, value, last_entry):
     if last_entry is not None:
-        timestamp = datetime.strptime(last_entry, "%Y-%m-%dT%H:%M:%SZ")
+        timestamp = datetime.strptime(last_entry, "%Y-%m-%dT%H:%M:%S.%fZ")
         if datetime.utcnow() - timestamp <= SEND_INTERVAL:
             send_to_graphite(location, metric_name, value, (timestamp - datetime.utcfromtimestamp(0)).total_seconds())
             return True
@@ -60,12 +60,12 @@ def send_storage_and_compression_stats(rubriker):
         ingested_bytes = None
         snapshot_bytes = None
         json_results = rubriker.do_api_call("api/internal/stats/snapshot_storage/ingested")
-        timestamp = datetime.strptime(json_results['lastUpdateTime'], "%Y-%m-%dT%H:%M:%SZ")
+        timestamp = datetime.strptime(json_results['lastUpdateTime'], "%Y-%m-%dT%H:%M:%S.%fZ")
         if datetime.utcnow() - timestamp <= SEND_INTERVAL:
             ingested_bytes = json_results['value']
             send_to_graphite(rubriker.location, "performance.backend_ingested_bytes", ingested_bytes, (timestamp - datetime.utcfromtimestamp(0)).total_seconds())
         json_results = rubriker.do_api_call("api/internal/stats/snapshot_storage/physical")
-        timestamp = datetime.strptime(json_results['lastUpdateTime'], "%Y-%m-%dT%H:%M:%SZ")
+        timestamp = datetime.strptime(json_results['lastUpdateTime'], "%Y-%m-%dT%H:%M:%S.%fZ")
         if datetime.utcnow() - timestamp <= SEND_INTERVAL:
             snapshot_bytes = json_results['value']
             send_to_graphite(rubriker.location, "storage.physical_snapshot_storage", snapshot_bytes, (timestamp - datetime.utcfromtimestamp(0)).total_seconds())
@@ -122,10 +122,7 @@ def send_replication_storage_stats(rubriker):
 
 def send_archival_storage_stats(rubriker):
     try:
-        try:
-            archival_location_details = rubriker.do_api_call("api/internal/data_location/archival_location", quiet=True)['data']
-        except Exception as e:
-            archival_location_details = rubriker.do_api_call("api/internal/archive/location")['data']
+        archival_location_details = rubriker.do_api_call("api/internal/data_location/archival_location", quiet=True)['data']
         archival_location_storage = rubriker.do_api_call("api/internal/stats/data_location/usage")['data']
         for archival_location in archival_location_storage:
             archival_location_name = None
