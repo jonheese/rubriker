@@ -133,8 +133,13 @@ def send_archival_storage_stats(rubriker):
                     break
             if archival_location_name is not None:
                 send_to_graphite(rubriker.location, "archive.bytes_downloaded.%s" % archival_location_name, archival_location['dataDownloaded'])
-                send_to_graphite(rubriker.location, "archive.bytes_archived.%s" % archival_location_name, archival_location['dataArchived'])
+                send_to_graphite(rubriker.location, "archive.bytes_uploaded.%s" % archival_location_name, archival_location['dataArchived'])
                 send_to_graphite(rubriker.location, "archive.vms_archived.%s" % archival_location_name, archival_location['numVMsArchived'])
+                send_to_graphite(rubriker.location, "archive.linux_filesets_archived.%s" % archival_location_name, archival_location['numLinuxFilesetsArchived'])
+                send_to_graphite(rubriker.location, "archive.windows_filesets_archived.%s" % archival_location_name, archival_location['numWindowsFilesetsArchived'])
+                send_to_graphite(rubriker.location, "archive.share_filesets_archived.%s" % archival_location_name, archival_location['numShareFilesetsArchived'])
+                send_to_graphite(rubriker.location, "archive.mssql_dbs_archived.%s" % archival_location_name, archival_location['numMssqlDbsArchived'])
+                send_to_graphite(rubriker.location, "archive.managed_volumes_archived.%s" % archival_location_name, archival_location['numManagedVolumesArchived'])
                 send_latest_stat(rubriker, "archive.bandwidth.%s" % archival_location_name, "api/internal/stats/archival/bandwidth/time_series?data_location_id=%s" % archival_location_id, "stat")
     except Exception as e:
         print e
