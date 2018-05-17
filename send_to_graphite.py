@@ -21,9 +21,12 @@ def send_to_graphite(location, metric, value, timestamp=time.time()):
         sock.close()
 
 
-def send_if_recent(location, metric_name, value, last_entry):
+def send_if_recent(location, metric_name, value, last_entry, rubrik_version):
     if last_entry is not None:
-        timestamp = datetime.strptime(last_entry, "%Y-%m-%dT%H:%M:%SZ")
+        if rubrik_version >= 4.1:
+            timestamp = datetime.strptime(last_entry, "%Y-%m-%dT%H:%M:%S.%fZ")
+        else:
+            timestamp = datetime.strptime(last_entry, "%Y-%m-%dT%H:%M:%SZ")
         if datetime.utcnow() - timestamp <= SEND_INTERVAL:
             send_to_graphite(location, metric_name, value, (timestamp - datetime.utcfromtimestamp(0)).total_seconds())
             return True
@@ -33,13 +36,13 @@ def send_if_recent(location, metric_name, value, last_entry):
 def send_latest_stat(rubriker, metric_name, endpoint, stat_name):
     json_results = rubriker.do_api_call(endpoint)
     for result in json_results:
-        send_if_recent(rubriker.location, metric_name, result[stat_name], result['time'])
+        send_if_recent(rubriker.location, metric_name, result[stat_name], result['time'], rubriker.get_rubrik_version())
 
 
 def send_singleton_stat(rubriker, metric_name, endpoint):
     try:
         json_results = rubriker.do_api_call(endpoint)
-        send_if_recent(rubriker.location, metric_name, json_results['value'], json_results['lastUpdateTime'])
+        send_if_recent(rubriker.location, metric_name, json_results['value'], json_results['lastUpdateTime'], rubriker.get_rubrik_version())
     except Exception as e:
         print e
 
@@ -48,9 +51,9 @@ def send_storage_stats(rubriker):
     try:
         json_results = rubriker.do_api_call("api/internal/stats/system_storage")
         last_entry = json_results['lastUpdateTime']
-        if send_if_recent(rubriker.location, "storage.total_storage", json_results['total'], last_entry):
-            send_if_recent(rubriker.location, "storage.used_storage", json_results['used'], last_entry)
-            send_if_recent(rubriker.location, "storage.available_storage", json_results['available'], last_entry)
+        if send_if_recent(rubriker.location, "storage.total_storage", json_results['total'], last_entry, rubriker.get_rubrik_version()):
+            send_if_recent(rubriker.location, "storage.used_storage", json_results['used'], last_entry, rubriker.get_rubrik_version())
+            send_if_recent(rubriker.location, "storage.available_storage", json_results['available'], last_entry, rubriker.get_rubrik_version())
     except Exception as e:
         print e
 
@@ -60,12 +63,18 @@ def send_storage_and_compression_stats(rubriker):
         ingested_bytes = None
         snapshot_bytes = None
         json_results = rubriker.do_api_call("api/internal/stats/snapshot_storage/ingested")
-        timestamp = datetime.strptime(json_results['lastUpdateTime'], "%Y-%m-%dT%H:%M:%SZ")
+        if rubriker.get_rubrik_version() >= 4.1:
+            timestamp = datetime.strptime(json_results['lastUpdateTime'], "%Y-%m-%dT%H:%M:%S.%fZ")
+        else:
+            timestamp = datetime.strptime(json_results['lastUpdateTime'], "%Y-%m-%dT%H:%M:%SZ")
         if datetime.utcnow() - timestamp <= SEND_INTERVAL:
             ingested_bytes = json_results['value']
             send_to_graphite(rubriker.location, "performance.backend_ingested_bytes", ingested_bytes, (timestamp - datetime.utcfromtimestamp(0)).total_seconds())
         json_results = rubriker.do_api_call("api/internal/stats/snapshot_storage/physical")
-        timestamp = datetime.strptime(json_results['lastUpdateTime'], "%Y-%m-%dT%H:%M:%SZ")
+        if rubriker.get_rubrik_version() >= 4.1:
+            timestamp = datetime.strptime(json_results['lastUpdateTime'], "%Y-%m-%dT%H:%M:%S.%fZ")
+        else:
+            timestamp = datetime.strptime(json_results['lastUpdateTime'], "%Y-%m-%dT%H:%M:%SZ")
         if datetime.utcnow() - timestamp <= SEND_INTERVAL:
             snapshot_bytes = json_results['value']
             send_to_graphite(rubriker.location, "storage.physical_snapshot_storage", snapshot_bytes, (timestamp - datetime.utcfromtimestamp(0)).total_seconds())
@@ -83,12 +92,12 @@ def send_cross_compression_stats(rubriker):
         json_results = rubriker.do_api_call("api/internal/stats/cross_compression")
         last_entry = json_results['lastUpdateTime']
         data = json.loads(json_results['value'])
-        if send_if_recent(rubriker.location, "performance.compression.logical_bytes", data['logicalBytes'], last_entry):
-            send_if_recent(rubriker.location, "performance.compression.logical_bytes", data['logicalBytes'], last_entry)
-            send_if_recent(rubriker.location, "performance.compression.zero_bytes", data['zeroBytes'], last_entry)
-            send_if_recent(rubriker.location, "performance.compression.precomp_bytes", data['preCompBytes'], last_entry)
-            send_if_recent(rubriker.location, "performance.compression.postcomp_bytes", data['postCompBytes'], last_entry)
-            send_if_recent(rubriker.location, "performance.compression.physical_bytes", data['physicalBytes'], last_entry)
+        if send_if_recent(rubriker.location, "performance.compression.logical_bytes", data['logicalBytes'], last_entry, rubriker.get_rubrik_version()):
+            send_if_recent(rubriker.location, "performance.compression.logical_bytes", data['logicalBytes'], last_entry, rubriker.get_rubrik_version())
+            send_if_recent(rubriker.location, "performance.compression.zero_bytes", data['zeroBytes'], last_entry, rubriker.get_rubrik_version())
+            send_if_recent(rubriker.location, "performance.compression.precomp_bytes", data['preCompBytes'], last_entry, rubriker.get_rubrik_version())
+            send_if_recent(rubriker.location, "performance.compression.postcomp_bytes", data['postCompBytes'], last_entry, rubriker.get_rubrik_version())
+            send_if_recent(rubriker.location, "performance.compression.physical_bytes", data['physicalBytes'], last_entry, rubriker.get_rubrik_version())
     except Exception as e:
         print e
 

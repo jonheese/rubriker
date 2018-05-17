@@ -13,6 +13,7 @@ class Rubriker(object):
         self.__rubrik_token = None
         self.__rubrik_token_expires = 0
         self.__conflux_devices = None
+        self.__rubrik_version = None
 
 
     def login_to_api(self):
@@ -84,6 +85,12 @@ class Rubriker(object):
                 )
 
         return json_results
+
+
+    def get_rubrik_version(self):
+        if not self.__rubrik_version:
+            self.__rubrik_version = float(".".join(self.do_api_call("api/v1/cluster/me/version")["version"].split(".")[:2]))
+        return self.__rubrik_version
 
 
     def get_conflux_details_by_short_name(self, shortname):
