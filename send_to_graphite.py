@@ -79,8 +79,14 @@ def send_storage_and_compression_stats(rubriker):
             snapshot_bytes = json_results['value']
             send_to_graphite(rubriker.location, "storage.physical_snapshot_storage", snapshot_bytes, (timestamp - datetime.utcfromtimestamp(0)).total_seconds())
         if ingested_bytes is not None and snapshot_bytes is not None:
-            reduction = (1 - (float(snapshot_bytes) / float(ingested_bytes))) * 100
-            ratio = float(ingested_bytes) / float(snapshot_bytes)
+            try:
+                reduction = (1 - (float(snapshot_bytes) / float(ingested_bytes))) * 100
+            except ZeroDivisionError:
+                reduction = 0.0
+            try:
+                ratio = float(ingested_bytes) / float(snapshot_bytes)
+            except ZeroDivisionError:
+                ratio = 1.0
             send_to_graphite(rubriker.location, "performance.compression.reduction", reduction, (timestamp - datetime.utcfromtimestamp(0)).total_seconds())
             send_to_graphite(rubriker.location, "performance.compression.ratio", ratio, (timestamp - datetime.utcfromtimestamp(0)).total_seconds())
     except Exception as e:
@@ -199,10 +205,6 @@ def send_all_data(rubriker):
     send_replication_storage_stats(rubriker)
     send_archival_storage_stats(rubriker)
 
-
-#while True:
-#    send_all_data()
-#    time.sleep(SEND_INTERVAL)
 
 print datetime.now()
 for location in rubrik_locations.keys():
