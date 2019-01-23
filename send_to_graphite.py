@@ -208,10 +208,17 @@ def send_all_data(rubriker):
 
 print datetime.now()
 for location in rubrik_locations.keys():
-    config_dict = rubrik_locations[location]
-    rubrik_user = config_dict["rubrik_user"]
-    rubrik_pass = config_dict["rubrik_pass"]
-    rubrik_url = config_dict["rubrik_url"]
-    rubriker = Rubriker(location, rubrik_user, rubrik_pass, rubrik_url)
-    send_all_data(rubriker)
-    rubriker.logout_of_api()
+    try:
+        config_dict = rubrik_locations[location]
+        rubrik_user = config_dict["rubrik_user"]
+        rubrik_pass = config_dict["rubrik_pass"]
+        rubrik_url = config_dict["rubrik_url"]
+        rubriker = Rubriker(location, rubrik_user, rubrik_pass, rubrik_url)
+        send_all_data(rubriker)
+    except:
+        print "Failed to gather data for location %s" % location
+    finally:
+        try:
+            rubriker.logout_of_api()
+        except:
+            print "Failed to log out of Rubrik at %s" % location
