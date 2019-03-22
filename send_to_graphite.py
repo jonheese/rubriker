@@ -160,6 +160,13 @@ def send_archival_storage_stats(rubriker):
         print e
 
 
+def send_organization_stats(rubriker):
+    try:
+        send_to_graphite(rubriker.location, "organizations.count", len(rubriker.do_api_call("api/internal/organization?is_global=false")["data"]))
+    except Exception as e:
+        print e
+
+
 def send_all_data(rubriker):
     try:
         send_to_graphite(rubriker.location, "system.briks", rubriker.do_api_call("api/internal/cluster/me/brik_count")['count'])
@@ -204,6 +211,7 @@ def send_all_data(rubriker):
     send_sla_stats(rubriker)
     send_replication_storage_stats(rubriker)
     send_archival_storage_stats(rubriker)
+    send_organization_stats(rubriker)
 
 
 print datetime.now()
