@@ -27,7 +27,7 @@ vm_names = []
 if len(sys.argv) > 1:
     vm_names = sys.argv[2:]
 else:
-    vm_names[0] = raw_input("Enter VM name: ")
+    vm_names.append(raw_input("Enter VM name: "))
 
 print "doing VM API call"
 vms = rubriker.do_api_call("api/v1/vmware/vm?limit=9999")['data']
